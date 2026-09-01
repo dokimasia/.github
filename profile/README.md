@@ -14,8 +14,13 @@ before it is trusted.
 
 ## Not more tests. Better evidence.
 
-A suite that cannot fail proves nothing, and most of them cannot. Every
-gate here is broken on purpose before it ships, and required to go red.
+A suite that cannot fail proves nothing, and most of them cannot. The
+usual answer is to write more tests, which mostly adds more of the same
+confidence. Ours is to break every gate on purpose before it ships and
+require it to go red — on code whose own suite was already green, that
+habit has found a seat losing three failures in four under concurrency,
+a conformance reader ignoring whole case files, and a suite checking its
+answers with the library it was testing.
 
 ---
 
@@ -50,6 +55,19 @@ flowchart LR
     class R out
 ```
 
+Writing that infrastructure by hand, once per language, is where the
+integrity goes. Six teams each implement what they believe the
+specification says, every suite passes, and nothing tests whether the
+six beliefs agree. So the definition is data rather than prose, because
+prose does not fail a build, and the harnesses around it are generated
+rather than typed out six times.
+
+eidos parses source into a symbol graph belonging to no language and
+renders it into seven. dokimi turns a definition into the suites that
+exercise it. The assertion libraries are what those suites assert with,
+and the reporter carries what they found into one shape whatever
+produced it.
+
 ---
 
 ## The assertions
@@ -70,6 +88,11 @@ against **both** surfaces in **every** language.
 > Go's `cmp` says a nil slice equals an empty one. Python says `None`
 > does not equal `[]`. Port a suite between them and **both builds go
 > green while testing different things.**
+
+Agreement is not a property any one library can have. A library can be
+correct on its own terms and still disagree with its five siblings, so
+the definition lives outside all of them and every one runs the same
+cases in its own CI.
 
 ---
 
