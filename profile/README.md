@@ -14,20 +14,8 @@ before it is trusted.
 
 ## Not more tests. Better evidence.
 
-A suite that cannot fail proves nothing, and most of them cannot.
-
-So every gate here is broken on purpose before it ships, and required to
-go red. That habit, on code whose own suite was green:
-
-| What was green | What breaking the check found |
-|---|---|
-| A seat used from eight threads | **78% of failures lost** — 3,611 of 16,000 counted |
-| A conformance suite, 141 cases passing | **Eight case files** read by nobody |
-| Two call-site resolvers | Pointed at **the wrong frame** for whole classes of caller |
-| A cancellation assertion | Asked whether a subject *stopped*, not whether it **said why** |
-| 1,466 tests, 11 noticing a silenced reporter | The suite **checked its answers with the library under test** |
-
-None of these was found by writing more tests.
+A suite that cannot fail proves nothing, and most of them cannot. Every
+gate here is broken on purpose before it ships, and required to go red.
 
 ---
 
