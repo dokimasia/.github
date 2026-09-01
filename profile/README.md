@@ -1,88 +1,119 @@
-# dokimasia
+<div align="center">
 
-One set of test assertions, defined as data, so the same test means the
-same thing in every language that implements it.
+# δοκιμασία
 
-## The problem
+**The scrutiny an Athenian official passed before taking office.**<br>
+Not a report on what was done — the examination a thing submits to
+before it is trusted.
 
-Write the same test twice, once in Python and once in Go, and the two
-should pass or fail together. Today they do not.
+<sub>Infrastructure for testing software that has to be right.</sub>
 
-Go's `cmp` package, configured the way most Go test helpers configure
-it, says a nil slice equals an empty slice. Python says `None` does not
-equal `[]`. Port a suite from one to the other and both builds go green
-while testing two different things. The difference surfaces months later
-as a bug that reproduces in one service and not its rewrite.
+</div>
 
-Six libraries written from a prose specification drift the same way, and
-the drift stays invisible because each library's own tests pass. Every
-team tests what it believes the specification says. Nothing tests
-whether the beliefs agree.
+---
 
-## What is here
+## Not more tests. Better evidence.
 
-The definition is data, not prose, because prose does not fail a build.
-Each library vendors a copy and runs the same cases in its own CI.
+A suite that cannot fail proves nothing, and most of them cannot.
 
-| Repository | Language | What it is |
+So every gate here is broken on purpose before it ships, and required to
+go red. That habit, on code whose own suite was green:
+
+| What was green | What breaking the check found |
+|---|---|
+| A seat used from eight threads | **78% of failures lost** — 3,611 of 16,000 counted |
+| A conformance suite, 141 cases passing | **Eight case files** read by nobody |
+| Two call-site resolvers | Pointed at **the wrong frame** for whole classes of caller |
+| A cancellation assertion | Asked whether a subject *stopped*, not whether it **said why** |
+| 1,466 tests, 11 noticing a silenced reporter | The suite **checked its answers with the library under test** |
+
+None of these was found by writing more tests.
+
+---
+
+## How the parts fit
+
+```mermaid
+flowchart LR
+    S["your source"] --> E
+
+    E["eidos<br/>one symbol graph,<br/>seven languages out"] --> D
+    D["dokimi<br/>generates the suites"] --> B["benchmarks"]
+    D --> F["fuzz targets"]
+    D --> C["conformance"]
+    D --> M["model &<br/>linearizability"]
+
+    A["assert-*<br/>41 assertions,<br/>one meaning"] -.-> B
+    A -.-> F
+    A -.-> C
+    A -.-> M
+
+    B --> R["reporter"]
+    F --> R
+    C --> R
+    M --> R
+    R --> Z[("dashboard")]
+
+    classDef ours fill:#0d1117,stroke:#58a6ff,stroke-width:2px,color:#e6edf3
+    classDef asserts fill:#0d1117,stroke:#3fb950,stroke-width:2px,color:#e6edf3
+    classDef out fill:#0d1117,stroke:#d29922,stroke-width:2px,color:#e6edf3
+    class E,D ours
+    class A asserts
+    class R out
+```
+
+---
+
+## The assertions
+
+One set, defined as data, so the same test means the same thing in every
+language that implements it. `41` assertions · `87` corpus cases · run
+against **both** surfaces in **every** language.
+
+| | Repository | |
 |---|---|---|
-| [assert-spec](https://github.com/dokimasia/assert-spec) | — | The definition: what each assertion means, what a caller types, and the cases every library runs |
-| [assert-go](https://github.com/dokimasia/assert-go) | Go | `go.dokimi.dev/assert` |
-| [assert-python](https://github.com/dokimasia/assert-python) | Python | `dokimi-assert` |
-| [assert-typescript](https://github.com/dokimasia/assert-typescript) | TypeScript | `@dokimi/assert` |
-| [assert-java](https://github.com/dokimasia/assert-java) | Java, Kotlin | `dev.dokimi:assert-core` |
-| [assert-rust](https://github.com/dokimasia/assert-rust) | Rust | `dokimi-assert` |
+| 📐 | **[assert-spec](https://github.com/dokimasia/assert-spec)** | The definition — meaning, names, and the cases every library runs |
+| 🐹 | [assert-go](https://github.com/dokimasia/assert-go) | Go |
+| 🐍 | [assert-python](https://github.com/dokimasia/assert-python) | Python |
+| 🟦 | [assert-typescript](https://github.com/dokimasia/assert-typescript) | TypeScript |
+| ☕ | [assert-java](https://github.com/dokimasia/assert-java) | Java · Kotlin |
+| 🦀 | [assert-rust](https://github.com/dokimasia/assert-rust) | Rust |
 
-## How a library is held to it
+> Go's `cmp` says a nil slice equals an empty one. Python says `None`
+> does not equal `[]`. Port a suite between them and **both builds go
+> green while testing different things.**
 
-Four mechanisms, because there are four ways to disagree.
+---
 
-**The corpus** states what an assertion means, as data. 87 cases run
-against both surfaces in all five libraries. It reaches 25 of the 41
-assertions: a case can state its arguments as typed literals, and where
-it cannot, it names one of ten behaviours the library builds natively
-instead. The remaining 16 want a real machine, a real filesystem or a
-real runtime.
+## House rules
 
-**The completeness gate** checks membership. Every assertion, and every
-one of the 40 rows naming the rest of the surface, is present under the
-name the table gives it, or the library declares in its overlay that it
-cannot supply it.
-
-**A failure is a record**, not a sentence. It carries the assertion's
-own named values, so a case checks what an assertion reported rather
-than searching its prose for a word. Every bug this project has found
-across languages hid behind a check that read a sentence.
-
-**Every check is mutated before it ships.** A gate nobody has watched
-fail checks nothing. Breaking what a check guards and requiring it to go
-red is what caught a seat losing 78% of concurrent failures, a corpus
-reader silently ignoring eight files, and two call-site resolvers
-pointing at the wrong frame for whole classes of caller.
-
-## What an assertion looks like
-
-Every one takes a seat first and a message last. The seat is where a
-failure goes, which is what lets one assertion serve a real test, a
-benchmark, and a test that checks the assertion itself.
-
-```go
-assert.Equal(t, store.Get(ctx, id), item, "Get returns the stored item")
+```
+Determinism first          Same input, same bytes.
+Mutate every check         Break it, watch it go red, restore. Say so in the commit.
+Never judge with the       A runner that checks its answers using the library
+subject                    under test passes having checked nothing.
+Declare divergence         Where a language cannot comply it says so, with a
+                           reason someone can argue with.
+A failure is a record      Named values, not prose to search for a word.
 ```
 
-```python
-check.equal(seat, store.get(id), item, "get returns the stored item")
-```
+---
 
-Two surfaces everywhere: one stops at the first failure, one records and
-lets the test carry on, so a single run reports every property that
-failed.
+## The names
 
-## Status
+| | Greek | Meaning |
+|---|---|---|
+| **dokimasia** | δοκιμασία | the scrutiny before office |
+| **dokimi** | δοκιμή | the trial itself |
+| **eidos** | εἶδος | the form, before any language gives it syntax |
 
-The definition is at 1.0.0 and the five libraries implement it. None is
-published to a registry yet, so install from source.
+---
 
-Assertions about behaviour are the part no other library offers:
-whether a subject honours cancellation, leaves observed state alone,
-survives a missing handle, or stays inside an allocation ceiling.
+<div align="center">
+<sub>
+
+Assertions `1.0.0`, five languages, unpublished · eidos and dokimi unreleased<br>
+Built by **[ThesmOS](https://github.com/thesm-os)** · MIT
+
+</sub>
+</div>
