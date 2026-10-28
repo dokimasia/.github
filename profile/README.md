@@ -24,13 +24,96 @@ answers with the library it was testing.
 
 ---
 
-## Try it in a minute
+## 🧪 dokimi — tests that prove they can fail
+
+**[dokimi](https://github.com/dokimasia/dokimi)** generates the tests and
+the test helpers of your Go code from directives in its doc comments —
+and then proves that every check it wrote can fail.
+
+A test that cannot fail looks exactly like a test that works, because
+both pass. So dokimi pairs each check with a **planted defect**: an
+implementation that is correct except for the one rule its check
+verifies. `go test` runs every check against its defect and fails when
+the check passes on it.
+
+```go
+// Store keeps items by key.
+//
+//dokimi:suite
+//dokimi:stub
+type Store interface {
+	Put(ctx context.Context, key, item string) error
+	Get(ctx context.Context, key string) (string, error)
+}
+
+// ReturnsThePutItem checks that Get returns the item that Put stored.
+//
+//dokimi:check Store.Get defect=forgetful
+func ReturnsThePutItem(h *StoreHandle) { … }
+```
+
+`dokimi run ./...` writes the conformance suite, the double and a test
+for every implementation marked `//dokimi:subject`. The generated code
+is plain Go that `go test` runs without dokimi.
+
+- **Conformance suites** of interfaces, structs and functions, with fuzz
+  targets, allocation budgets and benchmarks for every method
+- **Doubles** that record each call, return what a test configures, and
+  inject faults and latency
+- **Fixture builders**, the parse and print functions of enumerations,
+  and the specs of error values
+- **A CI gate** that fails the build on a generated file that is out of
+  date
+- **Signed releases** for Linux, macOS and Windows, with SBOMs and build
+  provenance
 
 ```sh
-brew install --cask dokimasia/tap/dokimi   # tests generated from directives in Go code
-brew install --cask dokimasia/tap/ergon    # a repository baseline: CI, linters, hooks, releases
-brew install --cask dokimasia/tap/techne   # IDE-grade code navigation for AI agents
-go get go.dokimi.dev/assert                # the assertions, in Go
+brew install --cask dokimasia/tap/dokimi
+```
+
+| | Repository | |
+|---|---|---|
+| 🧪 | **[dokimi](https://github.com/dokimasia/dokimi)** | The generator and its command line · `v0.6.0` |
+| 🔗 | [dokimi-go](https://github.com/dokimasia/dokimi-go) | The runtime the generated code calls: `conform` runs the suites, `stub` records the calls of the doubles, `fault` selects the calls that fail |
+
+---
+
+## 🧬 eidos — the engine underneath
+
+dokimi is built on **[eidos](https://github.com/dokimasia/eidos)**, a
+code-generation framework in its own right. A frontend parses source
+into a symbol graph that belongs to no language. Plugins annotate that
+graph and produce output. A backend renders it into a target language.
+One run regenerates only what changed, writes the same bytes every time,
+and can target several languages at once.
+
+| Language | Reads | Writes |
+|---|:---:|:---:|
+| Go | ✅ | ✅ |
+| TypeScript | ✅ | ✅ |
+| Java | ✅ | ✅ |
+| Rust | ✅ | ✅ |
+| Python | ✅ | ✅ |
+| protobuf | ✅ | ✅ |
+| GraphQL | ✅ | ✅ |
+
+- **One kernel, no language inside.** Every language is a satellite
+  module. Satellites never import each other, and everything that
+  crosses languages goes through the kernel's canonical types. The
+  kernel's runtime imports the standard library alone.
+- **Plugins two ways.** Typed plugins in Go on a stable SDK facade, or
+  declarative plugins — a YAML manifest and templates, no Go needed.
+- **Your binary, not ours.** The command kernels (`run`, `plan`,
+  `explain`, `prune`, `doctor`, `watch`, `schema`) give every tool built
+  on eidos the same command line, config file and JSON output.
+- **Under buf too.** The same composition runs as a protoc plugin under
+  `protoc` and `buf generate`.
+- **Specified first.** Every decision is an RFC or an ADR in the
+  repository, and a cross-language conformance corpus holds every
+  frontend to one set of expectations.
+
+```sh
+brew install --cask dokimasia/tap/eidos
 ```
 
 ---
@@ -41,11 +124,11 @@ go get go.dokimi.dev/assert                # the assertions, in Go
 flowchart LR
     S["your source"] --> E
 
-    E["eidos<br/>one symbol graph,<br/>seven languages out"] --> D
+    E["eidos<br/>one symbol graph,<br/>seven languages"] --> D
     D["dokimi<br/>generates the suites"] --> B["benchmarks"]
     D --> F["fuzz targets"]
     D --> C["conformance"]
-    D --> M["model &<br/>linearizability"]
+    D --> M["doubles &<br/>fixtures"]
 
     A["assert-*<br/>one set of assertions,<br/>one meaning"] -.-> B
     A -.-> F
@@ -72,20 +155,13 @@ six beliefs agree. So the definition is data rather than prose, because
 prose does not fail a build, and the harnesses around it are generated
 rather than typed out six times.
 
-eidos parses source into a symbol graph belonging to no language and
-renders it into seven — from a source tree, or as a protoc plugin under
-`buf generate`. dokimi turns a definition into the suites that exercise
-it. The assertion libraries are what those suites assert with, and
-mutation testing shows every change to your code that the suites let
-through.
-
 ---
 
 ## The assertions
 
-One set, defined as data, so the same test means the same thing in every
-language that implements it — run against **both** surfaces in **every**
-language.
+What the generated suites assert with. One set, defined as data, so the
+same test means the same thing in every language that implements it —
+run against **both** surfaces in **every** language.
 
 | | Repository | |
 |---|---|---|
@@ -137,41 +213,14 @@ pipeline that runs one runs them all.
 
 ---
 
-## Test generation
+## Also from the workshop
 
-Mark an interface `//dokimi:suite` and dokimi writes the conformance
-suite every implementation must pass. Mark a struct `//dokimi:builder`
-and it gets a fixture builder with its spec. Then dokimi plants a defect
-for every check it wrote and proves the check goes red — a generated
-test that cannot fail is not shipped.
+The tools we build these with, released on their own.
 
 | | Repository | |
 |---|---|---|
-| 🧪 | **[dokimi](https://github.com/dokimasia/dokimi)** | Conformance suites, doubles, fixture builders and the specs of enums and errors, from directives in Go code · `v0.6.0` |
-| 🔗 | [dokimi-go](https://github.com/dokimasia/dokimi-go) | The runtime the generated code calls: suites, stubs, fault injection |
-
----
-
-## Code generation
-
-eidos reads Go, TypeScript, Java, Rust, Python, protobuf and GraphQL into
-one symbol graph that belongs to no language, and renders it into several
-languages in one run — the same bytes every time, warm or cold. Plugins
-are typed Go or a YAML manifest with templates, and the same composition
-runs from a source tree or as a protoc plugin under `buf generate`.
-
-| | Repository | |
-|---|---|---|
-| 🧬 | **[eidos](https://github.com/dokimasia/eidos)** | The kernel, the language satellites, the command line and the protoc plugin host · below 1.0 |
-
----
-
-## Developer tools
-
-| | Repository | |
-|---|---|---|
-| ⚙️ | **[ergon](https://github.com/dokimasia/ergon)** | A managed baseline for repositories in eleven languages: CI, Makefile, linters, hooks, releases from changesets · `v0.16.0` |
-| 🧭 | **[techne](https://github.com/dokimasia/techne)** | An MCP server that gives AI agents an IDE's navigation and refactorings in ten languages · `v0.0.3` |
+| ⚙️ | [ergon](https://github.com/dokimasia/ergon) | A managed baseline for repositories in eleven languages: CI, Makefile, linters, hooks, releases from changesets · `v0.16.0` |
+| 🧭 | [techne](https://github.com/dokimasia/techne) | An MCP server that gives AI agents an IDE's navigation and refactorings in ten languages · `v0.0.3` |
 | 🔍 | [lint-go](https://github.com/dokimasia/lint-go) | Analyzers for error texts without their package and test skips that expired · `v0.2.0` |
 
 ---
@@ -180,10 +229,10 @@ runs from a source tree or as a protoc plugin under `buf generate`.
 
 The tools are young and the specifications are open. The fastest way in:
 
-- 🐛 **Break something.** Run a tool on your own code and open an issue with what went wrong. A failing example is worth more than a page of description.
-- 🌍 **Bring a language.** assert-spec and mutate-spec define their behaviour and its cases as data, so a port knows exactly when it is done. C# is waiting for an assertion library, and every language but Go for a mutation engine.
+- 🐛 **Break something.** Run dokimi on your own code and open an issue with what went wrong. A failing example is worth more than a page of description.
 - 🧩 **Write an eidos plugin.** A declarative plugin is a YAML manifest and templates — no Go needed.
-- 🗣️ **Argue with a decision.** Every repository records its reasoning in RFCs and ADRs under `docs/`. An issue that says one is wrong is welcome.
+- 🌍 **Bring a language.** assert-spec and mutate-spec define their behaviour and its cases as data, so a port knows exactly when it is done. C# is waiting for an assertion library, and every language but Go for a mutation engine.
+- 🗣️ **Argue with a decision.** dokimi and eidos record their reasoning in RFCs and ADRs under `docs/`. An issue that says one is wrong is welcome.
 
 Each project's `CONTRIBUTING.md` has its build, its checks and how review works.
 
@@ -218,8 +267,8 @@ A failure is a record      Named values, not prose to search for a word.
 <div align="center">
 <sub>
 
-assert-go, dokimi, mutate-go, ergon, techne and lint-go released · eidos below 1.0 · the other assertion libraries unpublished<br>
-Built by **[ThesmOS](https://github.com/thesm-os)** · libraries MIT · eidos and dokimi Apache-2.0
+dokimi `v0.6.0` · eidos below 1.0 · assert-go, mutate-go, ergon, techne and lint-go released · the other assertion libraries unpublished<br>
+Built by **[ThesmOS](https://github.com/thesm-os)** · dokimi and eidos Apache-2.0 · libraries MIT
 
 </sub>
 </div>
