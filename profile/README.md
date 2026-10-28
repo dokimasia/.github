@@ -137,15 +137,41 @@ pipeline that runs one runs them all.
 
 ---
 
-## The rest of the workshop
+## Test generation
+
+Mark an interface `//dokimi:suite` and dokimi writes the conformance
+suite every implementation must pass. Mark a struct `//dokimi:builder`
+and it gets a fixture builder with its spec. Then dokimi plants a defect
+for every check it wrote and proves the check goes red — a generated
+test that cannot fail is not shipped.
 
 | | Repository | |
 |---|---|---|
-| 🧪 | **[dokimi](https://github.com/dokimasia/dokimi)** | Conformance suites, doubles and fixture builders from directives in Go code — and proof that every check can fail · `v0.6.0` |
+| 🧪 | **[dokimi](https://github.com/dokimasia/dokimi)** | Conformance suites, doubles, fixture builders and the specs of enums and errors, from directives in Go code · `v0.6.0` |
 | 🔗 | [dokimi-go](https://github.com/dokimasia/dokimi-go) | The runtime the generated code calls: suites, stubs, fault injection |
-| 🧬 | **[eidos](https://github.com/dokimasia/eidos)** | One symbol graph from Go, TypeScript, Java, Rust, Python, protobuf and GraphQL; code for several languages in one run, byte-identical warm or cold |
-| ⚙️ | [ergon](https://github.com/dokimasia/ergon) | A managed baseline for repositories in eleven languages: CI, Makefile, linters, hooks, releases from changesets · `v0.16.0` |
-| 🧭 | [techne](https://github.com/dokimasia/techne) | An MCP server that gives AI agents an IDE's navigation and refactorings in ten languages · `v0.0.3` |
+
+---
+
+## Code generation
+
+eidos reads Go, TypeScript, Java, Rust, Python, protobuf and GraphQL into
+one symbol graph that belongs to no language, and renders it into several
+languages in one run — the same bytes every time, warm or cold. Plugins
+are typed Go or a YAML manifest with templates, and the same composition
+runs from a source tree or as a protoc plugin under `buf generate`.
+
+| | Repository | |
+|---|---|---|
+| 🧬 | **[eidos](https://github.com/dokimasia/eidos)** | The kernel, the language satellites, the command line and the protoc plugin host · below 1.0 |
+
+---
+
+## Developer tools
+
+| | Repository | |
+|---|---|---|
+| ⚙️ | **[ergon](https://github.com/dokimasia/ergon)** | A managed baseline for repositories in eleven languages: CI, Makefile, linters, hooks, releases from changesets · `v0.16.0` |
+| 🧭 | **[techne](https://github.com/dokimasia/techne)** | An MCP server that gives AI agents an IDE's navigation and refactorings in ten languages · `v0.0.3` |
 | 🔍 | [lint-go](https://github.com/dokimasia/lint-go) | Analyzers for error texts without their package and test skips that expired · `v0.2.0` |
 
 ---
