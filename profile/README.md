@@ -108,6 +108,35 @@ cases in its own CI.
 
 ---
 
+## Mutation testing
+
+The same idea, turned on your suite. A mutant is a small change to your
+code — `a - b` becomes `a + b` — and a suite that still passes has not
+tested that line. The operators are defined as data, so every engine
+makes the same mutants and writes the same record of a run.
+
+| | Repository | |
+|---|---|---|
+| 📜 | **[mutate-spec](https://github.com/dokimasia/mutate-spec)** | The definition — the operator catalogue and the record of a run |
+| 🐹 | [mutate-go](https://github.com/dokimasia/mutate-go) | Go · `dokimi-mutate-go` · `v0.2.0` |
+| 🟪 | mutate-csharp | C# — **looking for a maintainer** |
+| 🐍 🟦 ☕ 🦀 | mutate-&lt;lang&gt; | Python, TypeScript, Java, Rust — **not started, come build one** |
+
+```text
+arith.go:7:33: not covered: x * 2 became x / 2 (aor)
+arith.go:5:33: survived: a - b became a + b (aor)
+fixture: 2 of 6 mutants detected (33%): 2 killed, 2 survived, 2 not covered
+```
+
+```sh
+go run go.dokimi.dev/mutate/cmd/dokimi-mutate-go@latest ./...
+```
+
+Every engine of the standard is named `dokimi-mutate-<lang>`, so a
+pipeline that runs one runs them all.
+
+---
+
 ## The rest of the workshop
 
 | | Repository | |
@@ -115,8 +144,6 @@ cases in its own CI.
 | 🧪 | **[dokimi](https://github.com/dokimasia/dokimi)** | Conformance suites, doubles and fixture builders from directives in Go code — and proof that every check can fail · `v0.6.0` |
 | 🔗 | [dokimi-go](https://github.com/dokimasia/dokimi-go) | The runtime the generated code calls: suites, stubs, fault injection |
 | 🧬 | **[eidos](https://github.com/dokimasia/eidos)** | One symbol graph from Go, TypeScript, Java, Rust, Python, protobuf and GraphQL; code for several languages in one run, byte-identical warm or cold |
-| 🦠 | [mutate-go](https://github.com/dokimasia/mutate-go) | Mutation testing for Go — every change your tests miss · `v0.2.0` |
-| 📜 | [mutate-spec](https://github.com/dokimasia/mutate-spec) | Mutation testing defined as data, so every engine makes the same mutants |
 | ⚙️ | [ergon](https://github.com/dokimasia/ergon) | A managed baseline for repositories in eleven languages: CI, Makefile, linters, hooks, releases from changesets · `v0.16.0` |
 | 🧭 | [techne](https://github.com/dokimasia/techne) | An MCP server that gives AI agents an IDE's navigation and refactorings in ten languages · `v0.0.3` |
 | 🔍 | [lint-go](https://github.com/dokimasia/lint-go) | Analyzers for error texts without their package and test skips that expired · `v0.2.0` |
@@ -128,7 +155,7 @@ cases in its own CI.
 The tools are young and the specifications are open. The fastest way in:
 
 - 🐛 **Break something.** Run a tool on your own code and open an issue with what went wrong. A failing example is worth more than a page of description.
-- 🌍 **Bring a language.** assert-spec defines every assertion and its cases as data, so a port knows exactly when it is done. C# is waiting for someone.
+- 🌍 **Bring a language.** assert-spec and mutate-spec define their behaviour and its cases as data, so a port knows exactly when it is done. C# is waiting for an assertion library, and every language but Go for a mutation engine.
 - 🧩 **Write an eidos plugin.** A declarative plugin is a YAML manifest and templates — no Go needed.
 - 🗣️ **Argue with a decision.** Every repository records its reasoning in RFCs and ADRs under `docs/`. An issue that says one is wrong is welcome.
 
